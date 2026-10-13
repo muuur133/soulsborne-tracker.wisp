@@ -1,1 +1,343 @@
 
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0b0d">
+  <title>Soulsborne Death Tracker</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+      --bg: #0b0b0d;
+      --panel: #141416;
+      --gold: #c7a76a;
+      --gold-dim: #78613b;
+      --text: #e7e0d2;
+      --muted: #88837a;
+      --red: #b84a43;
+      --border: #292621;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 50% 0%, #282117 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: min(1120px, 92%);
+      margin: auto;
+    }
+
+    header {
+      text-align: center;
+      padding: 64px 0 36px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      font-size: 11px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, .number {
+      font-family: 'Cinzel', serif;
+    }
+
+    h1 {
+      font-size: clamp(30px, 5vw, 54px);
+      font-weight: 500;
+      letter-spacing: 2px;
+      margin: 20px 0 12px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .divider {
+      width: 100px;
+      height: 1px;
+      margin: 28px auto 0;
+      background: var(--gold-dim);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin: 42px 0 20px;
+    }
+
+    .section-heading h2 {
+      font-size: 20px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .live {
+      color: var(--gold);
+      font-size: 10px;
+      letter-spacing: 2px;
+    }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .stat {
+      background: linear-gradient(145deg, #191816, #111113);
+      border: 1px solid var(--border);
+      padding: 23px;
+      text-align: center;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .number {
+      font-size: clamp(28px, 4vw, 40px);
+      color: var(--gold);
+      margin-top: 12px;
+    }
+
+    .games {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      padding-bottom: 50px;
+    }
+
+    .game {
+      position: relative;
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      transition: border-color .25s, transform .25s;
+    }
+
+    .game:hover {
+      border-color: var(--gold-dim);
+      transform: translateY(-3px);
+    }
+
+    .art {
+      height: 145px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 50% 100%, #66503355, transparent 60%),
+        linear-gradient(145deg, #28231d, #101012 75%);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .art::before {
+      content: "";
+      position: absolute;
+      width: 115px;
+      height: 115px;
+      border: 1px solid #c7a76a35;
+      border-radius: 50%;
+      box-shadow: 0 0 45px #c7a76a0c;
+    }
+
+    .sigil {
+      z-index: 1;
+      font-family: 'Cinzel', serif;
+      font-size: 52px;
+      color: #c7a76a9c;
+      text-shadow: 0 0 25px #c7a76a30;
+    }
+
+    .game-content { padding: 20px; }
+
+    .game-number {
+      color: var(--gold-dim);
+      font-size: 10px;
+      letter-spacing: 3px;
+    }
+
+    .game h3 {
+      font-size: 17px;
+      line-height: 1.5;
+      min-height: 50px;
+      margin: 12px 0 20px;
+      font-weight: 500;
+    }
+
+    .death-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 15px;
+      border-top: 1px solid var(--border);
+    }
+
+    .death-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    .deaths {
+      color: var(--red);
+      font-family: 'Cinzel', serif;
+      font-size: 27px;
+    }
+
+    .current {
+      border-color: var(--gold-dim);
+    }
+
+    .current .game-number::after {
+      content: " · ТЕКУЩАЯ";
+      color: var(--gold);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      text-align: center;
+      padding: 25px 0 35px;
+      color: #5e5a53;
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    @media (max-width: 760px) {
+      .games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .art { height: 120px; }
+      .game-content { padding: 15px; }
+      .game h3 { font-size: 15px; }
+    }
+
+    @media (max-width: 440px) {
+      .games { grid-template-columns: 1fr; }
+      .overview { gap: 7px; }
+      .stat { padding: 15px 5px; }
+      .stat-label { font-size: 9px; letter-spacing: 1px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <div class="eyebrow">A journey through the fog</div>
+      <h1>Soulsborne<br>Death Tracker</h1>
+      <div class="subtitle">
+        Семь миров. Бесчисленные смерти.<br>
+        Путь, который должен быть пройден.
+      </div>
+      <div class="divider"></div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="section-heading">
+      <h2>Общая статистика</h2>
+      <span class="live" id="connection">● DEMO DATA</span>
+    </div>
+
+    <section class="overview">
+      <div class="stat">
+        <div class="stat-label">Всего смертей</div>
+        <div class="number" id="totalDeaths">0</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Игр начато</div>
+        <div class="number" id="gamesStarted">0 / 7</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Текущая игра</div>
+        <div class="number" id="currentGame" style="font-size:19px">—</div>
+      </div>
+    </section>
+
+    <div class="section-heading">
+      <h2>Хроники погибших</h2>
+      <span class="live">THE SEVEN SOULS</span>
+    </div>
+
+    <section class="games" id="games"></section>
+  </main>
+
+  <footer>
+    SOULSBORNE DEATH TRACKER · KEEP GOING, ASHEN ONE
+  </footer>
+
+  <script>
+    const gameNames = [
+      "Demon's Souls",
+      "Dark Souls Remastered",
+      "Dark Souls II: Scholar of the First Sin",
+      "Bloodborne",
+      "Dark Souls III",
+      "Sekiro: Shadows Die Twice",
+      "Elden Ring"
+    ];
+
+    const symbols = ["✦", "Ⅰ", "Ⅱ", "☾", "Ⅲ", "刃", "ᛟ"];
+
+    // Пока используем демонстрационные данные.
+    // На следующем шаге подключим настоящую базу Supabase.
+    const deaths = [0, 0, 0, 0, 0, 0, 0];
+    const currentGameIndex = 0;
+
+    function renderSite() {
+      const total = deaths.reduce((sum, value) => sum + value, 0);
+
+      document.getElementById("totalDeaths").textContent =
+        total.toLocaleString("ru-RU");
+
+      document.getElementById("gamesStarted").textContent =
+        `${deaths.filter(value => value > 0).length} / 7`;
+
+      document.getElementById("currentGame").textContent =
+        gameNames[currentGameIndex];
+
+      document.getElementById("currentGame").style.fontSize = "16px";
+
+      document.getElementById("games").innerHTML = gameNames.map(
+        (name, index) => `
+          <article class="game ${index === currentGameIndex ? "current" : ""}">
+            <div class="art">
+              <div class="sigil">${symbols[index]}</div>
+            </div>
+            <div class="game-content">
+              <div class="game-number">CHAPTER 0${index + 1}</div>
+              <h3>${name}</h3>
+              <div class="death-row">
+                <span class="death-label">СМЕРТЕЙ</span>
+                <span class="deaths">${deaths[index].toLocaleString("ru-RU")}</span>
+              </div>
+            </div>
+          </article>
+        `
+      ).join("");
+    }
+
+    renderSite();
+  </script>
+</body>
+</html>
