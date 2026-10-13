@@ -361,7 +361,7 @@
         total.toLocaleString("ru-RU");
 
       document.getElementById("gamesStarted").textContent =
-        `${deaths.filter(value => value > 0).length} / 7`;
+        `${currentGameIndex + 1} / 7`;
 
       document.getElementById("currentGame").textContent =
         gameNames[currentGameIndex];
