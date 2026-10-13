@@ -286,26 +286,76 @@
     SOULSBORNE DEATH TRACKER · KEEP GOING, ASHEN ONE
   </footer>
 
-  <script>
-    const gameNames = [
-      "Demon's Souls",
-      "Dark Souls Remastered",
-      "Dark Souls II: Scholar of the First Sin",
-      "Bloodborne",
-      "Dark Souls III",
-      "Sekiro: Shadows Die Twice",
-      "Elden Ring"
-    ];
+<script>
+  // Подключение к твоему проекту Supabase
+  const SUPABASE_URL =
+    "https://ndzpxuqsqfrgfmomkxew.supabase.co";
 
-    const symbols = ["✦", "Ⅰ", "Ⅱ", "☾", "Ⅲ", "刃", "ᛟ"];
+  const SUPABASE_KEY =
+    "sb_publishable_KMQo511yTDRqO_hHwaT5-g_WP3jCi0X";
 
-    // Пока используем демонстрационные данные.
-    // На следующем шаге подключим настоящую базу Supabase.
-    const deaths = [0, 0, 0, 0, 0, 0, 0];
-    const currentGameIndex = 0;
+  const gameNames = [
+    "Demon's Souls",
+    "Dark Souls Remastered",
+    "Dark Souls II: Scholar of the First Sin",
+    "Bloodborne",
+    "Dark Souls III",
+    "Sekiro: Shadows Die Twice",
+    "Elden Ring"
+  ];
 
-    function renderSite() {
-      const total = deaths.reduce((sum, value) => sum + value, 0);
+  const symbols = ["✦", "Ⅰ", "Ⅱ", "☾", "Ⅲ", "刃", "ᛟ"];
+
+  const gamesContainer = document.getElementById("games");
+  const connection = document.getElementById("connection");
+
+  async function loadStats() {
+    try {
+      connection.textContent = "● ПОДКЛЮЧЕНИЕ...";
+
+      const response = await fetch(
+        SUPABASE_URL +
+        "/rest/v1/tracker_state?select=deaths,current_game,updated_at&id=eq.main",
+        {
+          headers: {
+            "apikey": SUPABASE_KEY,
+            "Authorization": "Bearer " + SUPABASE_KEY
+          },
+          cache: "no-store"
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Ошибка загрузки: " + response.status);
+      }
+
+      const rows = await response.json();
+
+      if (!rows.length) {
+        throw new Error("Запись статистики не найдена");
+      }
+
+      const data = rows[0];
+      const deaths = data.deaths;
+      const currentGameIndex = data.current_game;
+
+      if (
+        !Array.isArray(deaths) ||
+        deaths.length !== 7 ||
+        !deaths.every(value =>
+          Number.isInteger(value) && value >= 0
+        ) ||
+        !Number.isInteger(currentGameIndex) ||
+        currentGameIndex < 0 ||
+        currentGameIndex >= 7
+      ) {
+        throw new Error("Неожиданный формат статистики");
+      }
+
+      // Общая статистика
+      const total = deaths.reduce(
+        (sum, value) => sum + value, 0
+      );
 
       document.getElementById("totalDeaths").textContent =
         total.toLocaleString("ru-RU");
@@ -316,28 +366,48 @@
       document.getElementById("currentGame").textContent =
         gameNames[currentGameIndex];
 
-      document.getElementById("currentGame").style.fontSize = "16px";
-
-      document.getElementById("games").innerHTML = gameNames.map(
+      // Карточки игр
+      gamesContainer.innerHTML = gameNames.map(
         (name, index) => `
-          <article class="game ${index === currentGameIndex ? "current" : ""}">
+          <article class="game ${
+            index === currentGameIndex ? "current" : ""
+          }">
             <div class="art">
               <div class="sigil">${symbols[index]}</div>
             </div>
             <div class="game-content">
-              <div class="game-number">CHAPTER 0${index + 1}</div>
+              <div class="game-number">
+                CHAPTER 0${index + 1}
+              </div>
               <h3>${name}</h3>
               <div class="death-row">
                 <span class="death-label">СМЕРТЕЙ</span>
-                <span class="deaths">${deaths[index].toLocaleString("ru-RU")}</span>
+                <span class="deaths">
+                  ${deaths[index].toLocaleString("ru-RU")}
+                </span>
               </div>
             </div>
           </article>
         `
       ).join("");
-    }
 
-    renderSite();
-  </script>
+      connection.textContent = "● LIVE · SUPABASE";
+      connection.style.color = "#8eae79";
+
+    } catch (error) {
+      console.error("Ошибка синхронизации:", error);
+
+      connection.textContent = "● ОШИБКА СИНХРОНИЗАЦИИ";
+      connection.style.color = "#b84a43";
+    }
+  }
+
+  // Загружаем статистику при открытии страницы
+  loadStats();
+
+  // Обновляем её каждые 30 секунд
+  setInterval(loadStats, 30000);
+</script>
+  
 </body>
 </html>
