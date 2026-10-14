@@ -424,24 +424,19 @@
 
       document.getElementById("currentGame").textContent =
         gameNames[currentGameIndex];
-      const totalMinutes = gameNames.reduce((sum, name) => {
-        const game = diary[name] || {};
+      
+const totalMinutes = Object.values(diary).reduce((sum, game) => {
+  const hours = Number(game.hours) || 0;
+  const minutes = Number(game.minutes) || 0;
 
-        const hours = Number.isInteger(game.hours) && game.hours >= 0
-          ? game.hours : 0;
+  return sum + hours * 60 + minutes;
+}, 0);
 
-        const minutes = Number.isInteger(game.minutes) &&
-          game.minutes >= 0 && game.minutes < 60
-          ? game.minutes : 0;
+const totalHours = Math.floor(totalMinutes / 60);
+const remainingMinutes = totalMinutes % 60;
 
-        return sum + hours * 60 + minutes;
-      }, 0);
-
-      const totalHours = Math.floor(totalMinutes / 60);
-      const remainingMinutes = totalMinutes % 60;
-
-      document.getElementById("totalPlaytime").textContent =
-        `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
+document.getElementById("totalPlaytime").textContent =
+  `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
 
       // Карточки игр с данными дневника
       gamesContainer.innerHTML = gameNames.map((name, index) => {
