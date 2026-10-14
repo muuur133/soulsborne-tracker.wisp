@@ -95,11 +95,10 @@
     }
 
     .overview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
-}
-  
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
 
     .stat {
       background: linear-gradient(145deg, #191816, #111113);
@@ -246,6 +245,7 @@
     .game-status.dropped {
       color: #b84a43;
     }
+
     .current {
       border-color: var(--gold-dim);
     }
@@ -266,8 +266,9 @@
 
     @media (max-width: 760px) {
       .overview {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .games { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .art { height: 120px; }
       .game-content { padding: 15px; }
@@ -332,279 +333,206 @@
     SOULSBORNE DEATH TRACKER · KEEP GOING, ASHEN ONE
   </footer>
 
+  <script>
+    const SUPABASE_URL =
+      "https://ndzpxuqsqfrgfmomkxew.supabase.co";
 
-<script>
-  const SUPABASE_URL =
-    "https://ndzpxuqsqfrgfmomkxew.supabase.co";
+    const SUPABASE_KEY =
+      "sb_publishable_KMQo511yTDRqO_hHwaT5-g_WP3jCi0X";
 
-  const SUPABASE_KEY =
-    "sb_publishable_KMQo511yTDRqO_hHwaT5-g_WP3jCi0X";
+    const gameNames = [
+      "Demon's Souls",
+      "Dark Souls Remastered",
+      "Dark Souls II: Scholar of the First Sin",
+      "Bloodborne",
+      "Dark Souls III",
+      "Sekiro: Shadows Die Twice",
+      "Elden Ring"
+    ];
 
-  const gameNames = [
-    "Demon's Souls",
-    "Dark Souls Remastered",
-    "Dark Souls II: Scholar of the First Sin",
-    "Bloodborne",
-    "Dark Souls III",
-    "Sekiro: Shadows Die Twice",
-    "Elden Ring"
-  ];
+    const symbols = ["✦", "Ⅰ", "Ⅱ", "☾", "Ⅲ", "刃", "ᛟ"];
 
-  const symbols = ["✦", "Ⅰ", "Ⅱ", "☾", "Ⅲ", "刃", "ᛟ"];
+    const gamesContainer = document.getElementById("games");
+    const connection = document.getElementById("connection");
 
-  const gamesContainer = document.getElementById("games");
-  const connection = document.getElementById("connection");
+    const headers = {
+      "apikey": SUPABASE_KEY,
+      "Authorization": "Bearer " + SUPABASE_KEY
+    };
 
-  const headers = {
-    "apikey": SUPABASE_KEY,
-    "Authorization": "Bearer " + SUPABASE_KEY
-  };
+    async function loadStats() {
+      try {
+        connection.textContent = "● ПОДКЛЮЧЕНИЕ...";
 
-  async function loadStats() {
-    try {
-      connection.textContent = "● ПОДКЛЮЧЕНИЕ...";
+        const [statsResponse, diaryResponse] = await Promise.all([
+          fetch(
+            SUPABASE_URL +
+            "/rest/v1/tracker_state?select=deaths,current_game,updated_at&id=eq.main",
+            { headers, cache: "no-store" }
+          ),
+          fetch(
+            SUPABASE_URL +
+            "/rest/v1/tracker_diary?select=diary&id=eq.main",
+            { headers, cache: "no-store" }
+          )
+        ]);
 
-      const [statsResponse, diaryResponse] = await Promise.all([
-        fetch(
-          SUPABASE_URL +
-          "/rest/v1/tracker_state?select=deaths,current_game,updated_at&id=eq.main",
-          { headers, cache: "no-store" }
-        ),
-        fetch(
-          SUPABASE_URL +
-          "/rest/v1/tracker_diary?select=diary&id=eq.main",
-          { headers, cache: "no-store" }
-        )
-      ]);
-
-      if (!statsResponse.ok) {
-        throw new Error("Ошибка загрузки статистики: " + statsResponse.status);
-      }
-
-      if (!diaryResponse.ok) {
-        throw new Error("Ошибка загрузки дневника: " + diaryResponse.status);
-      }
-
-      const statsRows = await statsResponse.json();
-      const diaryRows = await diaryResponse.json();
-
-      if (!statsRows.length) {
-        throw new Error("Запись статистики не найдена");
-      }
-
-      const data = statsRows[0];
-      const deaths = data.deaths;
-      const currentGameIndex = data.current_game;
-      const diary = diaryRows.length ? diaryRows[0].diary : {};
-      console.log("Дневник из Supabase:", diary);
-
-      if (
-        !Array.isArray(deaths) ||
-        deaths.length !== 7 ||
-        !deaths.every(value =>
-          Number.isInteger(value) && value >= 0
-        ) ||
-        !Number.isInteger(currentGameIndex) ||
-        currentGameIndex < 0 ||
-        currentGameIndex >= 7
-      ) {
-        throw new Error("Неожиданный формат статистики");
-      }
-
-      // Общая статистика
-      const total = deaths.reduce(
-        (sum, value) => sum + value, 0
-      );
-
-      document.getElementById("totalDeaths").textContent =
-        total.toLocaleString("ru-RU");
-
-      document.getElementById("gamesStarted").textContent =
-        `${currentGameIndex + 1} / 7`;
-
-      document.getElementById("currentGame").textContent =
-        gameNames[currentGameIndex];
-      
-const totalMinutes = Object.values(diary).reduce((sum, game) => {
-  const hours = Number(game.hours) || 0;
-  const minutes = Number(game.minutes) || 0;
-
-  return sum + hours * 60 + minutes;
-}, 0);
-
-const totalHours = Math.floor(totalMinutes / 60);
-const remainingMinutes = totalMinutes % 60;
-
-document.getElementById("totalPlaytime").textContent =
-  `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
-
-      // Карточки игр с данными дневника
-      gamesContainer.innerHTML = gameNames.map((name, index) => {
-        const game = diary[name] || {};
-      const statsRows = await statsResponse.json();
-      const diaryRows = await diaryResponse.json();
-
-      if (!statsRows.length) {
-        throw new Error("Запись статистики не найдена");
-      }
-
-      const data = statsRows[0];
-      const deaths = data.deaths;
-      const currentGameIndex = data.current_game;
-      const diary = diaryRows.length ? diaryRows[0].diary : {};
-
-      if (
-        !Array.isArray(deaths) ||
-        deaths.length !== 7 ||
-        !deaths.every(value =>
-          Number.isInteger(value) && value >= 0
-        ) ||
-        !Number.isInteger(currentGameIndex) ||
-        currentGameIndex < 0 ||
-        currentGameIndex >= 7
-      ) {
-        throw new Error("Неожиданный формат статистики");
-      }
-
-      // Общая статистика
-      const total = deaths.reduce(
-        (sum, value) => sum + value, 0
-      );
-
-      document.getElementById("totalDeaths").textContent =
-        total.toLocaleString("ru-RU");
-
-      document.getElementById("gamesStarted").textContent =
-        `${currentGameIndex + 1} / 7`;
-
-      document.getElementById("currentGame").textContent =
-        gameNames[currentGameIndex];
-      const totalMinutes = gameNames.reduce((sum, name) => {
-        const game = diary[name] || {};
-
-        const hours = Number.isInteger(game.hours) && game.hours >= 0
-          ? game.hours : 0;
-
-        const minutes = Number.isInteger(game.minutes) &&
-          game.minutes >= 0 && game.minutes < 60
-          ? game.minutes : 0;
-
-        return sum + hours * 60 + minutes;
-      }, 0);
-
-      const totalHours = Math.floor(totalMinutes / 60);
-      const remainingMinutes = totalMinutes % 60;
-
-      document.getElementById("totalPlaytime").textContent =
-        `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
-
-      // Карточки игр с данными дневника
-      gamesContainer.innerHTML = gameNames.map((name, index) => {
-        const game = diary[name] || {};
-
-        const hours = Number.isInteger(game.hours) && game.hours >= 0
-          ? game.hours : 0;
-
-        const minutes = Number.isInteger(game.minutes) &&
-          game.minutes >= 0 && game.minutes < 60
-          ? game.minutes : 0;
-
-        const hours = Number.isInteger(game.hours) && game.hours >= 0
-          ? game.hours : 0;
-
-        const minutes = Number.isInteger(game.minutes) &&
-          game.minutes >= 0 && game.minutes < 60
-          ? game.minutes : 0;
-
-        const rating = typeof game.rating === "number" &&
-          Number.isFinite(game.rating) &&
-          game.rating >= 1 && game.rating <= 10
-          ? game.rating : null;
-
-        const validStatuses = [
-          "Не начата",
-          "В процессе",
-          "Пройдена",
-          "Отложена",
-          "Брошена"
-        ];
-
-        const status = validStatuses.includes(game.status)
-          ? game.status : "Не начата";
-
-        let statusClass = "game-status";
-
-        if (status === "Пройдена") {
-          statusClass += " completed";
-        } else if (status === "Брошена") {
-          statusClass += " dropped";
+        if (!statsResponse.ok) {
+          throw new Error("Ошибка загрузки статистики: " + statsResponse.status);
         }
 
-        const formattedRating = rating === null
-          ? "—"
-          : `${Number.isInteger(rating) ? rating : rating.toLocaleString("ru-RU")}/10`;
+        if (!diaryResponse.ok) {
+          throw new Error("Ошибка загрузки дневника: " + diaryResponse.status);
+        }
 
-        return `
-          <article class="game ${
-            index === currentGameIndex ? "current" : ""
-          }">
-            <div class="art">
-              <div class="sigil">${symbols[index]}</div>
-            </div>
+        const statsRows = await statsResponse.json();
+        const diaryRows = await diaryResponse.json();
 
-            <div class="game-content">
-              <div class="game-number">
-                CHAPTER 0${index + 1}
+        if (!statsRows.length) {
+          throw new Error("Запись статистики не найдена");
+        }
+
+        const data = statsRows[0];
+        const deaths = data.deaths;
+        const currentGameIndex = data.current_game;
+        const diary = diaryRows.length ? diaryRows[0].diary : {};
+
+        if (
+          !Array.isArray(deaths) ||
+          deaths.length !== 7 ||
+          !deaths.every(value =>
+            Number.isInteger(value) && value >= 0
+          ) ||
+          !Number.isInteger(currentGameIndex) ||
+          currentGameIndex < 0 ||
+          currentGameIndex >= 7
+        ) {
+          throw new Error("Неожиданный формат статистики");
+        }
+
+        // Общая статистика
+        const total = deaths.reduce((sum, value) => sum + value, 0);
+
+        document.getElementById("totalDeaths").textContent =
+          total.toLocaleString("ru-RU");
+
+        document.getElementById("gamesStarted").textContent =
+          `${currentGameIndex + 1} / 7`;
+
+        document.getElementById("currentGame").textContent =
+          gameNames[currentGameIndex];
+
+        // Общее время по всем играм
+        const totalMinutes = Object.values(diary).reduce((sum, game) => {
+          const hours = Number(game.hours) || 0;
+          const minutes = Number(game.minutes) || 0;
+          return sum + hours * 60 + minutes;
+        }, 0);
+
+        const totalHours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+
+        document.getElementById("totalPlaytime").textContent =
+          `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
+
+        // Карточки игр с данными дневника
+        gamesContainer.innerHTML = gameNames.map((name, index) => {
+          const game = diary[name] || {};
+
+          const hours = Number.isInteger(game.hours) && game.hours >= 0
+            ? game.hours : 0;
+
+          const minutes = Number.isInteger(game.minutes) &&
+            game.minutes >= 0 && game.minutes < 60
+            ? game.minutes : 0;
+
+          const rating = typeof game.rating === "number" &&
+            Number.isFinite(game.rating) &&
+            game.rating >= 1 && game.rating <= 10
+            ? game.rating : null;
+
+          const validStatuses = [
+            "Не начата",
+            "В процессе",
+            "Пройдена",
+            "Отложена",
+            "Брошена"
+          ];
+
+          const status = validStatuses.includes(game.status)
+            ? game.status : "Не начата";
+
+          let statusClass = "game-status";
+
+          if (status === "Пройдена") {
+            statusClass += " completed";
+          } else if (status === "Брошена") {
+            statusClass += " dropped";
+          }
+
+          const formattedRating = rating === null
+            ? "—"
+            : `${Number.isInteger(rating) ? rating : rating.toLocaleString("ru-RU")}/10`;
+
+          return `
+            <article class="game ${
+              index === currentGameIndex ? "current" : ""
+            }">
+              <div class="art">
+                <div class="sigil">${symbols[index]}</div>
               </div>
 
-              <h3>${name}</h3>
+              <div class="game-content">
+                <div class="game-number">
+                  CHAPTER 0${index + 1}
+                </div>
 
-              <div class="death-row">
-                <span class="death-label">СМЕРТЕЙ</span>
-                <span class="deaths">
-                  ${deaths[index].toLocaleString("ru-RU")}
-                </span>
-              </div>
+                <h3>${name}</h3>
 
-              <div class="diary-info">
-                <div class="diary-row">
-                  <span class="diary-label">СТАТУС</span>
-                  <span class="diary-value ${statusClass}">
-                    ${status}
+                <div class="death-row">
+                  <span class="death-label">СМЕРТЕЙ</span>
+                  <span class="deaths">
+                    ${deaths[index].toLocaleString("ru-RU")}
                   </span>
                 </div>
 
-                <div class="diary-row">
-                  <span class="diary-label">ВРЕМЯ</span>
-                  <span class="diary-value">
-                    ${hours} ч ${String(minutes).padStart(2, "0")} мин
-                  </span>
-                </div>
+                <div class="diary-info">
+                  <div class="diary-row">
+                    <span class="diary-label">СТАТУС</span>
+                    <span class="diary-value ${statusClass}">
+                      ${status}
+                    </span>
+                  </div>
 
-                <div class="diary-row">
-                  <span class="diary-label">ОЦЕНКА</span>
-                  <span class="diary-value">${formattedRating}</span>
+                  <div class="diary-row">
+                    <span class="diary-label">ВРЕМЯ</span>
+                    <span class="diary-value">
+                      ${hours} ч ${String(minutes).padStart(2, "0")} мин
+                    </span>
+                  </div>
+
+                  <div class="diary-row">
+                    <span class="diary-label">ОЦЕНКА</span>
+                    <span class="diary-value">${formattedRating}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </article>
-        `;
-      }).join("");
+            </article>
+          `;
+        }).join("");
 
-      connection.textContent = "● LIVE · SUPABASE";
-      connection.style.color = "#8eae79";
+        connection.textContent = "● LIVE · SUPABASE";
+        connection.style.color = "#8eae79";
 
-    } catch (error) {
-      console.error("Ошибка синхронизации:", error);
-
-      connection.textContent = "● ОШИБКА СИНХРОНИЗАЦИИ";
-      connection.style.color = "#b84a43";
+      } catch (error) {
+        console.error("Ошибка синхронизации:", error);
+        connection.textContent = "● ОШИБКА СИНХРОНИЗАЦИИ";
+        connection.style.color = "#b84a43";
+      }
     }
-  }
 
-  loadStats();
-  setInterval(loadStats, 30000);
-</script>
-  
+    loadStats();
+    setInterval(loadStats, 30000);
+  </script>
 </body>
 </html>
