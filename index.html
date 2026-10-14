@@ -396,6 +396,7 @@
       const deaths = data.deaths;
       const currentGameIndex = data.current_game;
       const diary = diaryRows.length ? diaryRows[0].diary : {};
+      console.log("Дневник из Supabase:", diary);
 
       if (
         !Array.isArray(deaths) ||
@@ -445,6 +446,73 @@
       // Карточки игр с данными дневника
       gamesContainer.innerHTML = gameNames.map((name, index) => {
         const game = diary[name] || {};
+      const statsRows = await statsResponse.json();
+      const diaryRows = await diaryResponse.json();
+
+      if (!statsRows.length) {
+        throw new Error("Запись статистики не найдена");
+      }
+
+      const data = statsRows[0];
+      const deaths = data.deaths;
+      const currentGameIndex = data.current_game;
+      const diary = diaryRows.length ? diaryRows[0].diary : {};
+
+      if (
+        !Array.isArray(deaths) ||
+        deaths.length !== 7 ||
+        !deaths.every(value =>
+          Number.isInteger(value) && value >= 0
+        ) ||
+        !Number.isInteger(currentGameIndex) ||
+        currentGameIndex < 0 ||
+        currentGameIndex >= 7
+      ) {
+        throw new Error("Неожиданный формат статистики");
+      }
+
+      // Общая статистика
+      const total = deaths.reduce(
+        (sum, value) => sum + value, 0
+      );
+
+      document.getElementById("totalDeaths").textContent =
+        total.toLocaleString("ru-RU");
+
+      document.getElementById("gamesStarted").textContent =
+        `${currentGameIndex + 1} / 7`;
+
+      document.getElementById("currentGame").textContent =
+        gameNames[currentGameIndex];
+      const totalMinutes = gameNames.reduce((sum, name) => {
+        const game = diary[name] || {};
+
+        const hours = Number.isInteger(game.hours) && game.hours >= 0
+          ? game.hours : 0;
+
+        const minutes = Number.isInteger(game.minutes) &&
+          game.minutes >= 0 && game.minutes < 60
+          ? game.minutes : 0;
+
+        return sum + hours * 60 + minutes;
+      }, 0);
+
+      const totalHours = Math.floor(totalMinutes / 60);
+      const remainingMinutes = totalMinutes % 60;
+
+      document.getElementById("totalPlaytime").textContent =
+        `${totalHours} ч ${String(remainingMinutes).padStart(2, "0")} мин`;
+
+      // Карточки игр с данными дневника
+      gamesContainer.innerHTML = gameNames.map((name, index) => {
+        const game = diary[name] || {};
+
+        const hours = Number.isInteger(game.hours) && game.hours >= 0
+          ? game.hours : 0;
+
+        const minutes = Number.isInteger(game.minutes) &&
+          game.minutes >= 0 && game.minutes < 60
+          ? game.minutes : 0;
 
         const hours = Number.isInteger(game.hours) && game.hours >= 0
           ? game.hours : 0;
