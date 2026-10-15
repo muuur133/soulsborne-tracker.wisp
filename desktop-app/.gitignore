@@ -1,0 +1,19 @@
+
+# Build files
+build/
+build-*/
+cmake-build-*/
+
+# Local configuration and private credentials
+cloud.json
+
+# Personal game statistics
+stats.json
+diary.json
+
+# IDE and OS files
+.vscode/
+.idea/
+*.user
+Thumbs.db
+
